@@ -3,7 +3,7 @@ package nlp.lm;
 import java.io.*;
 import java.util.*;
 
-/** 
+/**
  * @author Ray Mooney
  * A simple bigram language model that uses simple fixed-weight interpolation
  * with a unigram model for smoothing.
@@ -12,7 +12,7 @@ import java.util.*;
 public class BigramModel {
 
     /** Unigram model that maps a token to its unigram probability */
-    public Map<String, DoubleValue> unigramMap = null; 
+    public Map<String, DoubleValue> unigramMap = null;
 
     /**  Bigram model that maps a bigram as a string "A\nB" to the
      *   P(B | A) */
@@ -65,7 +65,7 @@ public class BigramModel {
 	for (String token : sentence) {
 	    unigramValue = unigramMap.get(token);
 	    // If this is the first time token is seen then count it
-	    // as an unkown token (<UNK>) to handle out-of-vocabulary 
+	    // as an unkown token (<UNK>) to handle out-of-vocabulary
 	    // items in testing
 	    if (unigramValue == null) {
 		// Store token in unigram map with 0 count to indicate that
@@ -76,7 +76,7 @@ public class BigramModel {
 	    }
 	    unigramValue.increment();    // Count unigram
 	    tokenCount++;               // Count token
-	    // Make bigram string 
+	    // Make bigram string
 	    String bigram = bigram(prevToken, token);
 	    DoubleValue bigramValue = bigramMap.get(bigram);
 	    if (bigramValue == null) {
@@ -115,7 +115,7 @@ public class BigramModel {
 	    String token1 = bigramToken1(bigram); // Get first token of bigram
 	    // Prob is ratio of bigram count to token1 unigram count
 	    double condProb = bigramCount / unigramMap.get(token1).getValue();
-	    // Set map value to conditional probability 
+	    // Set map value to conditional probability
 	    value.setValue(condProb);
 	}
 	// Store unigrams with zero count to remove from map
@@ -127,7 +127,7 @@ public class BigramModel {
 	    // Uniggram count is the current map value
 	    DoubleValue value = entry.getValue();
 	    double count = value.getValue();
-	    if (count == 0) 
+	    if (count == 0)
 		// If count is zero (due to first encounter as <UNK>)
 		// then remove save it to remove from map
 		zeroTokens.add(token);
@@ -136,7 +136,7 @@ public class BigramModel {
 		value.setValue(count / tokenCount);
 	}
 	// Remove zero count unigrams from map
-	for (String token : zeroTokens) 
+	for (String token : zeroTokens)
 	    unigramMap.remove(token);
     }
 
@@ -173,7 +173,7 @@ public class BigramModel {
 	    String bigram = entry.getKey();
 	    // The value for the token is in the value of the DoubleValue
 	    DoubleValue value = entry.getValue();
-	    System.out.println(bigramToken2(bigram) + " given " + bigramToken1(bigram) + 
+	    System.out.println(bigramToken2(bigram) + " given " + bigramToken1(bigram) +
 			       " : " + value.getValue());
 	}
   }
@@ -199,7 +199,7 @@ public class BigramModel {
 	double perplexity = Math.exp(-totalLogProb / totalNumTokens);
 	System.out.println("Perplexity = " + perplexity );
     }
-    
+
     /* Compute log probability of sentence given current model */
     public double sentenceLogProb (List<String> sentence) {
 	// Set start-sentence as initial token
@@ -249,7 +249,7 @@ public class BigramModel {
 	double perplexity = Math.exp(-totalLogProb / totalNumTokens);
 	System.out.println("Word Perplexity = " + perplexity );
     }
-    
+
     /** Like sentenceLogProb but excludes predicting end-of-sentence when computing prob */
     public double sentenceLogProb2 (List<String> sentence) {
 	String prevToken = "<S>";
@@ -301,7 +301,7 @@ public class BigramModel {
 	return tokenProbs;
     }
 
-    /** Interpolate bigram prob using bigram and unigram model predictions */	 
+    /** Interpolate bigram prob using bigram and unigram model predictions */
     public double interpolatedProb(DoubleValue unigramVal, DoubleValue bigramVal) {
 	double bigramProb = 0;
 	// In bigram unknown then its prob is zero
@@ -320,8 +320,8 @@ public class BigramModel {
     }
 
     /** Train and test a bigram model.
-     *  Command format: "nlp.lm.BigramModel [DIR]* [TestFrac]" where DIR 
-     *  is the name of a file or directory whose LDC POS Tagged files should be 
+     *  Command format: "nlp.lm.BigramModel [DIR]* [TestFrac]" where DIR
+     *  is the name of a file or directory whose LDC POS Tagged files should be
      *  used for input data; and TestFrac is the fraction of the sentences
      *  in this data that should be used for testing, the rest for training.
      *  0 < TestFrac < 1
@@ -331,7 +331,7 @@ public class BigramModel {
     public static void main(String[] args) throws IOException {
 	// All but last arg is a file/directory of LDC tagged input data
 	File[] files = new File[args.length - 1];
-	for (int i = 0; i < files.length; i++) 
+	for (int i = 0; i < files.length; i++)
 	    files[i] = new File(args[i]);
 	// Last arg is the TestFrac
 	double testFraction = Double.valueOf(args[args.length -1]);
@@ -344,8 +344,8 @@ public class BigramModel {
 	List<List<String>> testSentences = sentences.subList(numSentences - numTest, numSentences);
 	// Take training sentences from start of data
 	List<List<String>> trainSentences = sentences.subList(0, numSentences - numTest);
-	System.out.println("# Train Sentences = " + trainSentences.size() + 
-			   " (# words = " + wordCount(trainSentences) + 
+	System.out.println("# Train Sentences = " + trainSentences.size() +
+			   " (# words = " + wordCount(trainSentences) +
 			   ") \n# Test Sentences = " + testSentences.size() +
 			   " (# words = " + wordCount(testSentences) + ")");
 	// Create a bigram model and train it.
