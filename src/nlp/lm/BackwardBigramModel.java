@@ -353,13 +353,14 @@ public class BackwardBigramModel {
      * for training.
      */
     public static void main(String[] args) throws IOException {
-        // All but last two args is a file/directory of LDC tagged input data
-        File[] files = new File[args.length - 2];
+        // All but last arg is a file/directory of LDC tagged input data
+        File[] files = new File[args.length - 1];
         for (int i = 0; i < files.length; i++)
             files[i] = new File(args[i]);
-        double testFraction = Double.valueOf(args[args.length - 2]);
+        // Last arg is the TestFrac
+        double testFraction = Double.valueOf(args[args.length -1]);
         // Get list of sentences from the LDC POS tagged input files
-        List<List<String>> sentences =  POSTaggedFile.convertToTokenLists(files);
+        List<List<String>> sentences = 	POSTaggedFile.convertToTokenLists(files);
         int numSentences = sentences.size();
         // Compute number of test sentences based on TestFrac
         int numTest = (int)Math.round(numSentences * testFraction);
@@ -371,20 +372,16 @@ public class BackwardBigramModel {
                 " (# words = " + wordCount(trainSentences) +
                 ") \n# Test Sentences = " + testSentences.size() +
                 " (# words = " + wordCount(testSentences) + ")");
-
         // Create a bigram model and train it.
         BackwardBigramModel model = new BackwardBigramModel();
         System.out.println("Training...");
         model.train(trainSentences);
-
         // Test on training data using test and test2
-        //model.test(trainSentences);
+        model.test(trainSentences);
         model.test2(trainSentences);
         System.out.println("Testing...");
-
         // Test on test data using test and test2
         model.test(testSentences);
         model.test2(testSentences);
     }
-
 }
