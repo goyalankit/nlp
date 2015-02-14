@@ -95,8 +95,8 @@ public class BidirectionalModel {
     }
 
     /**
-     * Train and test a bigram model.
-     * Command format: "nlp.lm.BackwardBigramModel [DIR]* [TestFrac]" where DIR
+     * Train and test a Bidirectional Model model.
+     * Command format: "nlp.lm.Bidirectional9Model [DIR]* [TestFrac]" where DIR
      * is the name of a file or directory whose LDC POS Tagged files should be
      * used for input data; and TestFrac is the fraction of the sentences
      * in this data that should be used for testing, the rest for training.
