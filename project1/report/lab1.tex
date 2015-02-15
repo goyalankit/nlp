@@ -1,0 +1,72 @@
+\documentclass[10pt] {article}
+\usepackage{fourier}
+\author{Ankit Goyal \\ankit@cs.utexas.edu \\ CS380L}
+\title{Homework 1: N-gram Language Models}
+\date{\today}	
+\usepackage{full page}
+\usepackage{minted} % to insert code
+\renewcommand\listingscaption{Codeblock}
+
+
+\usepackage{hyperref, url}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{amsmath}
+%\usepackage{amsmath, enumerate, url, ulem, algorithmic, polynom, subfig}
+\usepackage{array}
+\newcolumntype{L}{>{\centering\arraybackslash}m{2cm}}	
+
+\begin{document}
+\maketitle
+%----------------------------------------------------------------------------------------
+%  Specs
+%----------------------------------------------------------------------------------------
+
+%----------------------------------------------------------------------------------------
+%  Qemu Command Line
+%----------------------------------------------------------------------------------------
+
+\section{Introduction}
+N gram Model assumed that the probability of observing the $i^{i}$ word wi in the context history of the preceding $i ? 1$ words can be approximated by the probability of observing it in the shortened context history of the preceding $n ? 1 words$ ($nth$ order Markov property).
+
+In this assignment, the forward bigram model was modified to get the backward bigram model. Backward model aims at parsing sentences from right to left as compared to left to right for forward model. The performance of both the models were tested on three different corpus based on Word Perplexity Measures. In the next part of the assignment the two models were combined to a bidirectional model which combined both forward and backward models with a pre-decided weight given to each model. 
+
+
+%----------------------------------------------------------------------------------------
+%  DMESG output
+%----------------------------------------------------------------------------------------
+
+
+\begin{center}
+\begin{tabular}{| c || L | L | L | L | L |} 
+\hline
+  \multicolumn{6}{|c|}{Table 1} \\
+    \hline
+    {\bf Atis}  				& Forward & Backward 	& Bidirectional (F = 0.5, B = 0.5) & Bidirectional (F = 0.4, B = 0.6) & Bidirectional (F = 0.6, B = 0.4)		  \\ \hline
+    $Perplexity_{Train}$ 		& 9.04 	& 9.012 		& NA		& NA &	NA	\\ \hline
+    $WordPerplexity_{Train}$ 	& 10.59	& 11.63 		& 7.23 	& 7.32 &	 7.25	\\ \hline
+    $Perplexity_{Test}$ 		& 19.34	& 19.36 		& NA 	&  NA &	NA	\\ \hline
+    $WordPerplexity_{Test}$ 	& 24.05	& 27.16 		& 12.70	& 12.94 &	 12.69	\\ \hline
+    \hline
+    {\bf Brown} 				& Forward & Backward 	& Bidirectional (F = 0.5, B = 0.5) & Bidirectional (F = 0.4, B = 0.6) & Bidirectional (F = 0.6, B = 0.4) 		  \\ \hline
+    $Perplexity_{Train}$ 		& 93.52	& 93.51 		& NA 	& NA &	NA	\\ \hline
+    $WordPerplexity_{Train}$ 	& 113.36	& 110.78 		& 61.47 	& 61.85 &	62.22	\\ \hline
+    $Perplexity_{Test}$ 		& 231.30	& 231.20 		& NA 	&  NA &	NA	\\ \hline
+    $WordPerplexity_{Test}$ 	& 310.67	& 299.68 		& 167.48 	& 168.31 & 169.86	\\ \hline
+    \hline
+    {\bf WSJ}  				& Forward & Backward 	& Bidirectional (F = 0.5, B = 0.5) & Bidirectional (F = 0.4, B = 0.6) & Bidirectional (F = 0.6, B = 0.4)  \\ \hline
+    $Perplexity_{Train}$ 		& 74.27	& 74.27 		& NA 	& NA &	NA	\\ \hline
+    $WordPerplexity_{Train}$ 	& 88.89	& 86.66 		& 46.51	& 46.83 &	47.11	\\ \hline
+    $Perplexity_{Test}$ 		& 219.71	& 219.52 		& NA 	& NA &	NA	\\ \hline
+    $WordPerplexity_{Test}$ 	& 275.12	& 266.35 		& 126.113  & 127.07 & 127.81	\\ \hline
+  \end{tabular}
+\end{center}
+
+%----------------------------------------------------------------------------------------
+%  N vs N+1 Table
+%----------------------------------------------------------------------------------------
+
+
+\end{document}

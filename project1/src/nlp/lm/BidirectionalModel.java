@@ -14,7 +14,7 @@ public class BidirectionalModel {
     public BigramModel bigramModel;
     public BackwardBigramModel backwardBigramModel;
 
-    public static double FORWARD_RATIO = 0.5;
+    public static double FORWARD_RATIO = 0.6;
     public static double BACKWARD_RATIO = 1 - FORWARD_RATIO;
 
     /**
