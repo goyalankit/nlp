@@ -4,8 +4,7 @@
 .mtj.tmp/
 
 # Package Files #
-*.jar
-*.war
+.war
 *.ear
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
@@ -88,3 +87,4 @@ project1/data/*
 *.synctex.gz
 *.synctex.gz*
 
+*.tar.gz
