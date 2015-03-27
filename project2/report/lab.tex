@@ -1,0 +1,131 @@
+\documentclass[10pt] {article}
+\usepackage{fourier}
+\author{Ankit Goyal \\ankit@cs.utexas.edu \\ Natural Language Processing}
+\title{Homework 2: Part-of-Speech Tagging with HMMs and CRFs}
+\date{\today}	
+\usepackage{full page}
+\usepackage{minted} % to insert code
+\renewcommand\listingscaption{Codeblock}
+
+
+\usepackage{hyperref, url}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{amsmath}
+%\usepackage{amsmath, enumerate, url, ulem, algorithmic, polynom, subfig}
+\usepackage{array}
+\newcolumntype{L}{>{\centering\arraybackslash}m{2cm}}	
+
+\begin{document}
+\maketitle
+%----------------------------------------------------------------------------------------
+%  Specs
+%----------------------------------------------------------------------------------------
+
+%----------------------------------------------------------------------------------------
+%  Qemu Command Line
+%----------------------------------------------------------------------------------------
+
+\section{Introduction}
+In this experiment we analyze the performance of Hidden Markov Models (HMMs) and Conditional Random Fields (CRFs) for POS tagging problem. Part of Speech Tagging involves reading a piece of text in some language and assigning part of speech to each word (or other token), such as noun, verb, adjective, etc. 
+
+\paragraph{Hidden Markov Models: } Hidden Markov models are generative models. Input to HMM are tokens of observed symbols and it infers the corresponding pos tags. It models the joint distribution of labels and observations. The parameters estimated in HMM are the transition from one state to another ( where states are POS tags ) and observation probabilities (probability of a token in that POS tag).
+
+\paragraph{CRFs:} CRFs are a type of discriminative undirected probabilistic graphical model. To build a Conditional Random Field, we define a bunch of feature functions (which can depend on the entire sentence, a current position, and nearby labels), assign them weights, and add them all together, transforming at the end to a probability.[1] \\
+
+\noindent Each feature function is a function that takes input as: a sentence, the position $i$ of a word in the sentence, the label $l_{i}$ of the current word and the label $l_{i-1}$ of the previous word. and It outputs a real valued number.
+
+\paragraph{HMM vs CRM}: CRFs can model a much richer set of label distributions since HMMs are necessarily local in nature (because they are constrained to binary transmission and emission feature function, which forces that each word can depend only on a current label and each label to only depend on a previous label). CRFs can define functions with more context and this can predict better.
+
+\section{Experiments:}
+\begin{itemize}
+\item Since mallet requires the training data in a fixed format, the first task was to convert the given datasets to the format required by the mallet.
+\item For the WSJ two sets of tests were run, in SHORT test, the model was trained on 00 and it was tested on 01 and in LARGE set, the model was trained on 00, 01 and tested on 02 and 03.
+\item Tests were run with different features i.e., only considering morph features and then considering morph features with suffix features.
+\end{itemize}
+
+
+\begin{center}
+\begin{tabular}{| c || c | c | c | c | } 
+\hline
+    \multicolumn{5}{|c|}{ATIS} \\       \hline    
+\hline
+  			& Training Accuracy  & Testing Accuracy 	& OOV Accuracy & Time\\ \hline
+HMM				&0.8865	& 0.8659	&	0.2916	& 00:00:07 \\ \hline
+CRF 					&0.9982	&0.9163	& 0.3333		& 00:01:14	 \\ \hline 	
+CRF + morph 			&0.9983	&0.9299	& 0.3750		& 00:01:59	 \\ \hline 	
+CRF + morph + suffix 	&0.9981	&0.9357	& 0.4583		& 00:02:25	 \\ \hline 	
+
+    \multicolumn{5}{|c|}{WSJ } \\       \hline    
+HMM SHORT					&0.8617	&0.7848	& 0.3794		& 00:01:14	 \\ \hline 	
+HMM LARGE					&0.8870	&0.8333	& 0.3917 		& 00:06:28	 \\ \hline
+CRF SHORT 					&0.9837	&0.7916	& 0.4721		& 02:08:44	 \\ \hline 	
+CRF LARGE 					&0.9938	&0.84262	&0.50518 		& 05:32:10	\\ \hline
+CRF + morph SHORT 			&0.9935	&0.8323	& 0.5900		& 02:25:19	 \\ \hline 	
+CRF + morph LARGE 			&0.9878	&0.8605	& 0.6060 		& 05:01:17  	\\ \hline
+CRF + morph + suffix SHORT		&0.9902	&0.8772	& 0.7630		& 01:57:55	\\ \hline 	
+CRF + morph + suffix LARGE		&0.9915	&0.9030	& 0.7665 		& 06:28:00 	\\ \hline
+  \end{tabular}
+\end{center}
+
+\section{Observations:}
+
+\begin{enumerate}
+\item {\bf {Test Accuracy:}} Test accuracy for CRF is always better than test accuracy for HMM. The reason for that is that the generative model has higher asymptotic error and HMMs are less prone to overfitting that CRFs. As we increase the amount of data the test accuracy increases for CRF significantly. 
+\item {\bf{Training Accuracy:}} Training accuracy for CRF is higher than HMM because CRF can overfit the model and thus the training accuracy is higher for CRF.
+\item {\bf{Test Accuracy for OOV}} Test accuracy of OOV words is significantly less than as compared to seen tokens. Since their observation probability will be very less than compared to seen tokens. 
+\item {\bf Adding orthographic features:} I added two types of orthographic features. Morphological Features: caps, hyphen and number. And suffix features: able, ed, er, ly, ing, full, less, ity, or, ion.
+With increase in orthographic features, the time required to train CRF didn't increase proportionally to the number of features added. However the accuracy increased with the introduction of othrograhic features across all phases. 
+\item {\bf {Runtime:} } Due to the nature of algorithms as expected CRF is slower that HMM. The CRF is about 15-100 times slower than HMM. This is because CRF runs perform more number of computations, however CRF is more accurate than HMM which could be more important than the runtime for lots of the applications.
+\item {\bf Number of iterations: } Number of iteration for HMM to converge are less than the number of iterations required in CRF. It is due to the complexity of the models. CRF needs to learn about more parameters and thus need more number of iterations. Both the models observe an increase in accuracy with more number of iterations.s
+
+\end{enumerate}
+
+
+
+
+%\begin{center}
+%\begin{tabular}{| c || L | L | L | L | L |} 
+%\hline
+%  \multicolumn{6}{|c|}{Table 1} \\
+%    \hline
+%    {\bf Atis}  				& Forward & Backward 	& Bidirectional (F = 0.5, B = 0.5) & Bidirectional (F = 0.4, B = 0.6) & Bidirectional (F = 0.6, B = 0.4)		  \\ \hline
+%    $Perplexity_{Train}$ 		& 9.04 	& 9.012 		& NA		& NA &	NA	\\ \hline
+%    $WordPerplexity_{Train}$ 	& 10.59	& 11.63 		& 7.23 	& 7.32 &	 7.25	\\ \hline
+%    $Perplexity_{Test}$ 		& 19.34	& 19.36 		& NA 	&  NA &	NA	\\ \hline
+%    $WordPerplexity_{Test}$ 	& 24.05	& 27.16 		& 12.70	& 12.94 &	 12.69	\\ \hline
+%    \hline
+%    {\bf Brown} 				& Forward & Backward 	& Bidirectional (F = 0.5, B = 0.5) & Bidirectional (F = 0.4, B = 0.6) & Bidirectional (F = 0.6, B = 0.4) 		  \\ \hline
+%    $Perplexity_{Train}$ 		& 93.52	& 93.51 		& NA 	& NA &	NA	\\ \hline
+%    $WordPerplexity_{Train}$ 	& 113.36	& 110.78 		& 61.47 	& 61.85 &	62.22	\\ \hline
+%    $Perplexity_{Test}$ 		& 231.30	& 231.20 		& NA 	&  NA &	NA	\\ \hline
+%    $WordPerplexity_{Test}$ 	& 310.67	& 299.68 		& 167.48 	& 168.31 & 169.86	\\ \hline
+%    \hline
+%    {\bf WSJ}  				& Forward & Backward 	& Bidirectional (F = 0.5, B = 0.5) & Bidirectional (F = 0.4, B = 0.6) & Bidirectional (F = 0.6, B = 0.4)  \\ \hline
+%    $Perplexity_{Train}$ 		& 74.27	& 74.27 		& NA 	& NA &	NA	\\ \hline
+%    $WordPerplexity_{Train}$ 	& 88.89	& 86.66 		& 46.51	& 46.83 &	47.11	\\ \hline
+%    $Perplexity_{Test}$ 		& 219.71	& 219.52 		& NA 	& NA &	NA	\\ \hline
+%    $WordPerplexity_{Test}$ 	& 275.12	& 266.35 		& 126.113  & 127.07 & 127.81	\\ \hline
+%  \end{tabular}
+%\end{center}
+%
+%Table 1. summarizes the results of each case. In the following sections I discuss the results.
+%----------------------------------------------------------------------------------------
+%  DMESG output
+%----------------------------------------------------------------------------------------
+
+\section{References:}
+\begin{enumerate}
+\item http://blog.echen.me/2012/01/03/introduction-to-conditional-random-fields/
+\end{enumerate}
+
+
+
+%----------------------------------------------------------------------------------------
+%  N vs N+1 Table
+%----------------------------------------------------------------------------------------
+
+
+\end{document}
