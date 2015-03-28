@@ -88,3 +88,5 @@ project1/data/*
 *.synctex.gz*
 
 *.tar.gz
+
+*stanford-parser-3.5.1-models.jar
