@@ -218,7 +218,8 @@ class ActiveLexicalizedParser {
             System.out.println("Remaining: " + total--);
             tree = lp.apply(tree.taggedYield());
             System.out.println("Tree Score: " + tree.score());
-            remainingTrainSentProb.put(tree, (tree.score()/2));
+            // TODO check the logic here. If the normalizing factor is okay.
+            remainingTrainSentProb.put(tree, (tree.score()/tree.yieldWords().size()));
 
         }
         sortedtrainSentWProb = sortByValueDouble(remainingTrainSentProb);
@@ -229,7 +230,9 @@ class ActiveLexicalizedParser {
         HashMap<Tree, Double> trainSentWScore = new HashMap<>();
         for (Tree tree : remainingTrainSentProb.keySet()) {
             tree = lp.apply(tree.taggedYield());
-            trainSentWScore.put(tree, Math.pow(tree.score(), 1.0/(tree.yieldWords().size())));
+            //trainSentWScore.put(tree, Math.pow(tree.score(), 1.0/(tree.yieldWords().size())));
+            // TODO check the logic here. If the normalizing factor is okay.
+            trainSentWScore.put(tree, tree.score()/tree.yieldWords().size());
         }
         sortedtrainSentWProb = sortByValueDouble(trainSentWScore);
     }
