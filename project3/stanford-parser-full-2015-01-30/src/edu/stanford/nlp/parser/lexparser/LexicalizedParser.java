@@ -273,6 +273,11 @@ public class LexicalizedParser extends ParserGrammar implements Serializable {
     return trainFromTreebank(trainTreebank, null, op);
   }
 
+  public static Treebank getListOfTreeBanks(String treebankPath, Options op) {
+    Treebank trainTreebank = op.tlpParams.diskTreebank();
+    trainTreebank.loadPath(treebankPath);
+    return trainTreebank
+  }
 
   /**
    * Will process a list of strings into a list of HasWord and return
