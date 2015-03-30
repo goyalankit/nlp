@@ -20,14 +20,23 @@ import edu.stanford.nlp.parser.lexparser.Options;
 class ActiveLexicalizedParser {
 
     private static final int ITERATION_COUNT = 20;
+    public static boolean BY_ITERATION_COUNT = true;
     public static Treebank trainTreeBank;
     public static Treebank initialTreeBank;
     public static Map<Tree, Integer> sortedtrainSentWScore;
+    public static Map<Tree, Double> sortedtrainSentWProb;
+    public static List<Tree> listOfTrainData;
+
+    public static HashMap<Tree, Double> remainingTrainSentProb;
+
     public static PrintWriter out;
     public static long totalWords = 0;
     public static Options op;
     public static File file;
     public static int iteration = 0;
+
+    private ActiveLexicalizedParser() {
+    } // static methods only
 
     /**
      * The main method demonstrates the easiest way to load a parser.
@@ -67,7 +76,10 @@ class ActiveLexicalizedParser {
             totalWords += ct.yieldWords().size();
         }
 
-        trainBySentenceLength(lp);
+        //trainBySentenceLength(lp);
+        //trainByRandomSelection(lp);
+        trainByProb1(lp);
+
         System.out.println("Testing now...");
         test(lp, testTreebank);
         printStats();
@@ -86,10 +98,42 @@ class ActiveLexicalizedParser {
     *
     * */
 
-    public static LexicalizedParser trainByRandomSelection() {
+    public static LexicalizedParser trainByRandomSelection(LexicalizedParser lp) {
+        listOfTrainData = new LinkedList<>();
+        createListOfTrainData();
+        while (listOfTrainData.size() > 0) {
+            System.out.println("Training iteration: " + iteration);
+            chooseByRandomSelection();
+            lp = LexicalizedParser.trainFromTreebank(file.getAbsolutePath(), null, op);
+            iteration++;
+            if (iteration == 20) break;
+        }
 
+        System.out.println("Training finished.");
+        return lp;
+    }
 
-        return null;
+    public static void chooseByRandomSelection() {
+        Random random = new Random();
+        int wordCount = 0;
+        while (wordCount < 1500 && listOfTrainData.size() > 0) {
+            // System.out.println("Size: " + listOfTrainData.size());
+            int num = random.nextInt(listOfTrainData.size());
+            Tree tree = listOfTrainData.get(num);
+            appendToFile(tree);
+            totalWords += tree.yieldWords().size();
+            wordCount += tree.yieldWords().size();
+            listOfTrainData.remove(num);
+        }
+
+        System.out.println("Length of list of trained data: " + listOfTrainData.size());
+
+    }
+
+    public static void createListOfTrainData() {
+        for (Tree tree : trainTreeBank) {
+            listOfTrainData.add(tree);
+        }
     }
 
     /*
@@ -101,16 +145,157 @@ class ActiveLexicalizedParser {
         createHashForTreeAndLength();
         while (sortedtrainSentWScore.size() > 0) {
             System.out.println("Training iteration: " + iteration);
-            chooseByLength(1500, op);
+            chooseByLength(1500);
             lp = LexicalizedParser.trainFromTreebank(file.getAbsolutePath(), null, op);
             iteration++;
-            if (iteration == 4) break;
+            if (BY_ITERATION_COUNT && iteration == 4) break;
         }
 
         System.out.println("Training finished.");
         return lp;
     }
 
+    // lower value is at the top.
+    public static Map<Tree, Integer> sortByValueInteger(Map<Tree, Integer> map) {
+        List list = new LinkedList(map.entrySet());
+        Collections.sort(list, new Comparator() {
+
+            @Override
+            public int compare(Object o1, Object o2) {
+                return ((Comparable) ((Map.Entry) (o1)).getValue()).compareTo(((Map.Entry) (o2)).getValue());
+            }
+        });
+
+        Map result = new LinkedHashMap();
+        for (Iterator it = list.iterator(); it.hasNext(); ) {
+            Map.Entry entry = (Map.Entry) it.next();
+            result.put(entry.getKey(), entry.getValue());
+            System.out.println("Score: "+entry.getValue());
+        }
+        return result;
+    }
+
+    // used for selection by sentence length.
+    private static void createHashForTreeAndLength() {
+        HashMap<Tree, Integer> trainSentWScore = new HashMap<>();
+        for (Tree tree : trainTreeBank) {
+            trainSentWScore.put(tree, tree.yield().size());
+        }
+        sortedtrainSentWScore = sortByValueInteger(trainSentWScore);
+    }
+
+
+    private static void chooseByLength(int k) {
+        if (null == sortedtrainSentWScore) {
+            createHashForTreeAndLength();
+        }
+        List<Tree> toBeRemovedTrees = new LinkedList<>();
+        int i = 0;
+        for (Map.Entry<Tree, Integer> entry : sortedtrainSentWScore.entrySet()) {
+            if (i >= 1500) break;
+            appendToFile(entry.getKey());
+            toBeRemovedTrees.add(entry.getKey());
+            totalWords += entry.getValue();
+            i += entry.getValue();
+        }
+
+        for (Tree tree : toBeRemovedTrees) {
+            sortedtrainSentWScore.remove(tree);
+        }
+        System.out.println("Length of sorted hash: " + sortedtrainSentWScore.size());
+    }
+
+    /*
+    * Method 2
+    *
+    * */
+
+
+    public static void initHashForTreeAndProb(LexicalizedParser lp) {
+        remainingTrainSentProb = new HashMap<>();
+        int total  = trainTreeBank.size();
+        for (Tree tree : trainTreeBank) {
+            System.out.println("Remaining: " + total--);
+            tree = lp.apply(tree.taggedYield());
+            System.out.println("Tree Score: " + tree.score());
+            remainingTrainSentProb.put(tree, (tree.score()/2));
+
+        }
+        sortedtrainSentWProb = sortByValueDouble(remainingTrainSentProb);
+    }
+
+    public static void resetHashForTreeAndProb(LexicalizedParser lp) {
+        sortedtrainSentWProb.clear();
+        HashMap<Tree, Double> trainSentWScore = new HashMap<>();
+        for (Tree tree : remainingTrainSentProb.keySet()) {
+            tree = lp.apply(tree.taggedYield());
+            trainSentWScore.put(tree, Math.pow(tree.score(), 1.0/(tree.yieldWords().size())));
+        }
+        sortedtrainSentWProb = sortByValueDouble(trainSentWScore);
+    }
+
+
+    public static LexicalizedParser trainByProb1(LexicalizedParser lp) {
+        boolean first = true;
+        initHashForTreeAndProb(lp);
+        while (first || sortedtrainSentWProb.size() > 0) {
+            first = false;
+            System.out.println("Training iteration: " + iteration);
+            chooseByProbSelectParseTree(lp);
+            lp = LexicalizedParser.trainFromTreebank(file.getAbsolutePath(), null, op);
+            iteration++;
+            if (iteration == 20) break;
+        }
+
+        System.out.println("Training finished.");
+        return lp;
+    }
+
+    public static void chooseByProbSelectParseTree(LexicalizedParser lp) {
+        int wordCount = 0;
+        for (Map.Entry<Tree, Double> entry : sortedtrainSentWProb.entrySet()) {
+            appendToFile(entry.getKey());
+            wordCount += entry.getKey().yieldWords().size();
+            remainingTrainSentProb.remove(entry.getKey());
+        }
+        resetHashForTreeAndProb(lp);
+        System.out.println("Length of remaining training set: " + remainingTrainSentProb.size());
+    }
+
+    // higher probability is at the top
+    public static Map<Tree, Double> sortByValueDouble(Map<Tree, Double> map) {
+        List list = new LinkedList(map.entrySet());
+        Collections.sort(list, new Comparator() {
+
+            @Override
+            public int compare(Object o1, Object o2) {
+                return ((Comparable) ((Map.Entry) (o2)).getValue()).compareTo(((Map.Entry) (o1)).getValue());
+            }
+        });
+
+        Map result = new LinkedHashMap();
+        for (Iterator it = list.iterator(); it.hasNext(); ) {
+            Map.Entry entry = (Map.Entry) it.next();
+            result.put(entry.getKey(), entry.getValue());
+            System.out.println("Score: "+entry.getValue());
+        }
+        return result;
+    }
+
+    /*
+    * Method 3
+    *
+    * */
+    private static Treebank getTopKtrees(LexicalizedParser lp) {
+        LexicalizedParserQuery lpq = lp.lexicalizedParserQuery();
+        for (Tree tree : trainTreeBank) {
+
+        }
+        return null;
+    }
+
+
+    /* Common Methods */
 
     public static void test(LexicalizedParser lp, Treebank testTreebank) {
         EvaluateTreebank evaluator = new EvaluateTreebank(lp);
@@ -128,143 +313,13 @@ class ActiveLexicalizedParser {
         }
     }
 
-    public static void appendToFile(Treebank tree) {
-        out.println(tree.toString());
+    public static void appendToFile(Treebank treebank) {
+        out.println(treebank.toString());
         out.flush();
     }
 
     public static void appendToFile(Tree tree) {
-        out.println(tree.toString());
+        out.println(tree.pennString());
         out.flush();
     }
-
-    public static Map<Tree, Integer> sortByValue(Map<Tree, Integer> map) {
-        List list = new LinkedList(map.entrySet());
-        Collections.sort(list, new Comparator() {
-
-            @Override
-            public int compare(Object o1, Object o2) {
-                return ((Comparable) ((Map.Entry) (o1)).getValue()).compareTo(((Map.Entry) (o2)).getValue());
-            }
-        });
-
-        Map result = new LinkedHashMap();
-        for (Iterator it = list.iterator(); it.hasNext(); ) {
-            Map.Entry entry = (Map.Entry) it.next();
-            result.put(entry.getKey(), entry.getValue());
-        }
-        return result;
-    }
-
-    // used for selection by sentence length.
-    private static void createHashForTreeAndLength() {
-        HashMap<Tree, Integer> trainSentWScore = new HashMap<>();
-        for (Tree tree : trainTreeBank) {
-            trainSentWScore.put(tree, tree.yield().size());
-        }
-        sortedtrainSentWScore = sortByValue(trainSentWScore);
-    }
-
-
-    private static void chooseByLength(int k, Options op) {
-        if (null == sortedtrainSentWScore) {
-            createHashForTreeAndLength();
-        }
-        List<Tree> toBeRemovedTrees = new LinkedList<>();
-        int i = 0;
-        for (Map.Entry<Tree, Integer> entry : sortedtrainSentWScore.entrySet()) {
-            if (i >= k) break;
-            appendToFile(entry.getKey());
-            toBeRemovedTrees.add(entry.getKey());
-            totalWords += entry.getValue();
-            i += entry.getValue();
-        }
-
-        for (Tree tree : toBeRemovedTrees) {
-            sortedtrainSentWScore.remove(tree);
-        }
-        System.out.println("Length of sorted hash: " + sortedtrainSentWScore.size());
-    }
-
-    private static Treebank getTopKtrees(LexicalizedParser lp) {
-
-        LexicalizedParserQuery lpq = lp.lexicalizedParserQuery();
-        for (Tree tree : trainTreeBank) {
-
-        }
-        return null;
-    }
-
-    /**
-     * demoDP demonstrates turning a file into tokens and then parse
-     * trees.  Note that the trees are printed by calling pennPrint on
-     * the Tree object.  It is also possible to pass a PrintWriter to
-     * pennPrint if you want to capture the output.
-     * This code will work with any supported language.
-     */
-    public static void demoDP(LexicalizedParser lp, String filename) {
-        // This option shows loading, sentence-segmenting and tokenizing
-        // a file using DocumentPreprocessor.
-        TreebankLanguagePack tlp = lp.treebankLanguagePack(); // a PennTreebankLanguagePack for English
-        GrammaticalStructureFactory gsf = null;
-        if (tlp.supportsGrammaticalStructures()) {
-            gsf = tlp.grammaticalStructureFactory();
-        }
-        // You could also create a tokenizer here (as below) and pass it
-        // to DocumentPreprocessor
-        for (List<HasWord> sentence : new DocumentPreprocessor(filename)) {
-            Tree parse = lp.apply(sentence);
-            parse.pennPrint();
-            System.out.println();
-
-            if (gsf != null) {
-                GrammaticalStructure gs = gsf.newGrammaticalStructure(parse);
-                Collection tdl = gs.typedDependenciesCCprocessed();
-                System.out.println(tdl);
-                System.out.println();
-            }
-        }
-    }
-
-    /**
-     * demoAPI demonstrates other ways of calling the parser with
-     * already tokenized text, or in some cases, raw text that needs to
-     * be tokenized as a single sentence.  Output is handled with a
-     * TreePrint object.  Note that the options used when creating the
-     * TreePrint can determine what results to print out.  Once again,
-     * one can capture the output by passing a PrintWriter to
-     * TreePrint.printTree. This code is for English.
-     */
-    public static void demoAPI(LexicalizedParser lp) {
-        // This option shows parsing a list of correctly tokenized words
-        String[] sent = {"This", "is", "an", "easy", "sentence", "."};
-        List<CoreLabel> rawWords = Sentence.toCoreLabelList(sent);
-        Tree parse = lp.apply(rawWords);
-        parse.pennPrint();
-        System.out.println();
-
-        // This option shows loading and using an explicit tokenizer
-        String sent2 = "This is another sentence.";
-        TokenizerFactory<CoreLabel> tokenizerFactory =
-                PTBTokenizer.factory(new CoreLabelTokenFactory(), "");
-        Tokenizer<CoreLabel> tok =
-                tokenizerFactory.getTokenizer(new StringReader(sent2));
-        List<CoreLabel> rawWords2 = tok.tokenize();
-        parse = lp.apply(rawWords2);
-
-        TreebankLanguagePack tlp = lp.treebankLanguagePack(); // PennTreebankLanguagePack for English
-        GrammaticalStructureFactory gsf = tlp.grammaticalStructureFactory();
-        GrammaticalStructure gs = gsf.newGrammaticalStructure(parse);
-        List<TypedDependency> tdl = gs.typedDependenciesCCprocessed();
-        System.out.println(tdl);
-        System.out.println();
-
-        // You can also use a TreePrint object to print trees and dependencies
-        TreePrint tp = new TreePrint("penn,typedDependenciesCollapsed");
-        tp.printTree(parse);
-    }
-
-    private ActiveLexicalizedParser() {
-    } // static methods only
-
 }
