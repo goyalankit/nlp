@@ -2,17 +2,8 @@
 import java.io.*;
 import java.util.*;
 
-import edu.stanford.nlp.parser.common.ParserQuery;
 import edu.stanford.nlp.parser.lexparser.EvaluateTreebank;
 import edu.stanford.nlp.parser.lexparser.LexicalizedParserQuery;
-import edu.stanford.nlp.process.Tokenizer;
-import edu.stanford.nlp.process.TokenizerFactory;
-import edu.stanford.nlp.process.CoreLabelTokenFactory;
-import edu.stanford.nlp.process.DocumentPreprocessor;
-import edu.stanford.nlp.process.PTBTokenizer;
-import edu.stanford.nlp.ling.CoreLabel;
-import edu.stanford.nlp.ling.HasWord;
-import edu.stanford.nlp.ling.Sentence;
 import edu.stanford.nlp.trees.*;
 import edu.stanford.nlp.parser.lexparser.LexicalizedParser;
 import edu.stanford.nlp.parser.lexparser.Options;
@@ -232,8 +223,6 @@ class ActiveLexicalizedParser {
     * Method 2
     *
     * */
-
-
     public static void initHashForTreeAndProb(LexicalizedParser lp) {
         remainingTrainSentProb = new HashMap<>();
         int total  = trainTreeBank.size();
@@ -313,7 +302,6 @@ class ActiveLexicalizedParser {
     * Method 3
     *
     * */
-
     private static LexicalizedParser trainByTreeEntropy(LexicalizedParser lp) {
         initHashForTreeAndEntropy(lp);
         boolean first = true;
@@ -343,9 +331,8 @@ class ActiveLexicalizedParser {
         sortedtrainSentWProb.clear();
         HashMap<Tree, Double> trainSentWScore = new HashMap<Tree, Double>();
         for (Tree tree : remainingTrainSentProb.keySet()) {
-            //trainSentWScore.put(tree, Math.pow(tree.score(), 1.0/(tree.yieldWords().size())));
             // TODO check the logic here. If the normalizing factor is okay.
-            trainSentWScore.put(tree, getTreeEntropy(lp, tree));
+            trainSentWScore.put(tree, getTreeEntropy(lp, tree)/tree.size());
         }
         sortedtrainSentWProb = sortByValueDouble(trainSentWScore);
     }
@@ -356,7 +343,7 @@ class ActiveLexicalizedParser {
         for (Tree tree : trainTreeBank) {
             System.out.println("Remaining: " + total--);
             // TODO check the logic here. If the normalizing factor is okay.
-            remainingTrainSentProb.put(tree, (getTreeEntropy(lp, tree)));
+            remainingTrainSentProb.put(tree, (getTreeEntropy(lp, tree)/tree.size()));
             //System.out.println("TESTING: second -" + tree.score() /(tree.yieldWords().size()));
         }
         sortedtrainSentWProb = sortByValueDouble(remainingTrainSentProb);
@@ -372,13 +359,12 @@ class ActiveLexicalizedParser {
         for (ScoredObject<Tree> sco : kPraseTrees) {
             total_score += sco.score();
         }
-
+         System.out.println("Total Tree Entropy: " + total_score);
         return total_score;
     }
 
 
     /* Common Methods */
-
     public static void test(LexicalizedParser lp, Treebank testTreebank) {
         EvaluateTreebank evaluator = new EvaluateTreebank(lp);
         evaluator.testOnTreebank(testTreebank);
