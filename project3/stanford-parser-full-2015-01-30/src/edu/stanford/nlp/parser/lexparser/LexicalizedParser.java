@@ -273,10 +273,18 @@ public class LexicalizedParser extends ParserGrammar implements Serializable {
     return trainFromTreebank(trainTreebank, null, op);
   }
 
-  public static Treebank getListOfTreeBanks(String treebankPath, Options op) {
-    Treebank trainTreebank = op.tlpParams.diskTreebank();
-    trainTreebank.loadPath(treebankPath);
-    return trainTreebank
+  public static Treebank getTreebankFromDir(String treebankPath, Options op) {
+    File file = new File(treebankPath);
+    Treebank treebank = op.tlpParams.diskTreebank();
+    if (file.isDirectory()) {
+        File[] dirFiles = file.listFiles();
+        for (int i = 0; i < dirFiles.length; i++) {
+            treebank.loadPath(dirFiles[i]);
+        }
+    } else {
+        treebank.loadPath(treebankPath);
+    }
+        return treebank;
   }
 
   /**
