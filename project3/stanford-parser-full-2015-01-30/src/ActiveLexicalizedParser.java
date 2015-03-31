@@ -13,6 +13,7 @@ class ActiveLexicalizedParser {
 
     private static final int ITERATION_COUNT = 20;
     public static boolean BY_ITERATION_COUNT = true;
+    public static int []TRAIN_WORDS_NUMBER = new int[] {200, 500, 1000, 5000, 10000, 50000, 75000, 100000};
     public static Treebank trainTreeBank;
     public static Treebank initialTreeBank;
     public static Map<Tree, Integer> sortedtrainSentWScore;
@@ -47,6 +48,8 @@ class ActiveLexicalizedParser {
         String training_data_dir = args[1];
         String testTreebankpath = args[2];
 
+        AnalysisType type = AnalysisType.RANDOM;
+
         // options for lexicalized parser
         op = new Options();
         op.doDep = false;
@@ -61,49 +64,70 @@ class ActiveLexicalizedParser {
         initialTreeBank = LexicalizedParser.getTreebankFromDir(initial_data, op);
         trainTreeBank = LexicalizedParser.getTreebankFromDir(training_data_dir, op);
 
-        // create the intermediate training file.
-        initFile();
-
-        appendToFile(initialTreeBank);
         for (Tree ct : initialTreeBank) {
             totalWords += ct.yieldWords().size();
         }
 
 
-        AnalysisType type = AnalysisType.TREE_ENTROPY;
+        for (int num_words : TRAIN_WORDS_NUMBER){
+            System.out.println("NLP: Training on words: " + num_words);
 
-        switch (type) {
-            case RANDOM:
-                System.out.println("Training using random selection.");
-                lp = trainByRandomSelection(lp);
-                break;
+            // create the intermediate training file.
+            initFile(num_words);
 
-            case SEN_LENGTH:
-                System.out.println("Training using sentence length.");
-                lp = trainBySentenceLength(lp);
-                break;
+            appendToFile(initialTreeBank);
 
-            case SEL_PROB:
-                System.out.println("Training using selective probability.");
-                lp = trainByProb1(lp);
-                break;
+            int totalTrainWords = 0;
+            for (Tree tt : trainTreeBank) {
+                totalTrainWords += tt.yieldWords().size();
+                appendToFile(tt);
+                if (totalTrainWords >= num_words) break;
+            }
 
-            case TREE_ENTROPY:
-                System.out.println("Training using tree entropy.");
-                lp = trainByTreeEntropy(lp);
-                break;
+            System.out.println("NLP: Training on words actual: " + totalTrainWords);
+            switch (type) {
+                case RANDOM:
+                    System.out.println("NLP: Training using random selection.");
+                    lp = trainByRandomSelection(lp);
+                    break;
+
+                case SEN_LENGTH:
+                    System.out.println("NLP: Training using sentence length.");
+                    lp = trainBySentenceLength(lp);
+                    break;
+
+                case SEL_PROB:
+                    System.out.println("NLP: Training using selective probability.");
+                    lp = trainByProb1(lp);
+                    break;
+
+                case TREE_ENTROPY:
+                    System.out.println("NLP: Training using tree entropy.");
+                    lp = trainByTreeEntropy(lp);
+                    break;
+
+            }
+
+            System.out.println("NLP: Testing now...");
+            test(lp, testTreebank);
+            printStats();
+
         }
 
-        System.out.println("Testing now...");
-        test(lp, testTreebank);
-        printStats();
+
+        cleanUp();
+    }
+
+
+    public static void cleanUp() {
+
     }
 
     public static void printStats() {
-        System.out.println("*************************************");
-        System.out.println("Total training words: " + totalWords);
-        System.out.println("Number of iterations: " + iteration);
-        System.out.println("*************************************");
+        System.out.println("NLP: *************************************");
+        System.out.println("NLP: Total training words: " + totalWords);
+        System.out.println("NLP: Number of iterations: " + iteration);
+        System.out.println("NLP: *************************************");
     }
 
     /*
@@ -113,17 +137,17 @@ class ActiveLexicalizedParser {
     * */
 
     public static LexicalizedParser trainByRandomSelection(LexicalizedParser lp) {
-        listOfTrainData = new LinkedList<>();
+        listOfTrainData = new LinkedList<Tree>();
         createListOfTrainData();
         while (listOfTrainData.size() > 0) {
-            System.out.println("Training iteration: " + iteration);
+            System.out.println("DEBUG: Training iteration: " + iteration);
             chooseByRandomSelection();
             lp = LexicalizedParser.trainFromTreebank(file.getAbsolutePath(), null, op);
             iteration++;
             if (iteration == 20) break;
         }
 
-        System.out.println("Training finished.");
+        System.out.println("NLP: Training finished.");
         return lp;
     }
 
@@ -140,7 +164,7 @@ class ActiveLexicalizedParser {
             listOfTrainData.remove(num);
         }
 
-        System.out.println("Length of list of trained data: " + listOfTrainData.size());
+        System.out.println("DEBUG: Length of list of trained data: " + listOfTrainData.size());
 
     }
 
@@ -191,9 +215,9 @@ class ActiveLexicalizedParser {
 
     // used for selection by sentence length.
     private static void createHashForTreeAndLength() {
-        HashMap<Tree, Integer> trainSentWScore = new HashMap<>();
+        HashMap<Tree, Integer> trainSentWScore = new HashMap<Tree, Integer>();
         for (Tree tree : trainTreeBank) {
-            trainSentWScore.put(tree, tree.yield().size());
+            trainSentWScore.put(tree, tree.yieldWords().size());
         }
         sortedtrainSentWScore = sortByValueInteger(trainSentWScore);
     }
@@ -224,7 +248,7 @@ class ActiveLexicalizedParser {
     *
     * */
     public static void initHashForTreeAndProb(LexicalizedParser lp) {
-        remainingTrainSentProb = new HashMap<>();
+        remainingTrainSentProb = new HashMap<Tree, Double>();
         int total  = trainTreeBank.size();
         for (Tree tree : trainTreeBank) {
             System.out.println("Remaining: " + total--);
@@ -370,8 +394,8 @@ class ActiveLexicalizedParser {
         evaluator.testOnTreebank(testTreebank);
     }
 
-    public static void initFile() {
-        file = new File("training.cont");
+    public static void initFile(int num_words) {
+        file = new File("training.cont"+num_words);
         try {
 
             FileWriter fstream = new FileWriter(file);
