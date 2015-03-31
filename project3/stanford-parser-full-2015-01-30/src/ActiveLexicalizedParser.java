@@ -54,7 +54,7 @@ class ActiveLexicalizedParser {
         if (args.length > 4) {
             BY_ITERATION_COUNT = Boolean.parseBoolean(args[4]);
         }
-        type = AnalysisType.SEN_LENGTH;
+        //type = AnalysisType.SEN_LENGTH;
 
         // options for lexicalized parser
         op = new Options();
