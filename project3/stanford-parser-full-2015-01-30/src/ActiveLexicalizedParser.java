@@ -47,14 +47,16 @@ class ActiveLexicalizedParser {
         String initial_data = args[0];
         String training_data_dir = args[1];
         String testTreebankpath = args[2];
-
-        AnalysisType type = AnalysisType.RANDOM;
+        AnalysisType type = AnalysisType.valueOf(args[3]);
+        //AnalysisType type = AnalysisType.RANDOM;
 
         // options for lexicalized parser
         op = new Options();
         op.doDep = false;
         op.doPCFG = true;
         op.setOptions("-goodPCFG", "-evals", "tsv");
+
+        System.out.println("Running...");
 
         // train on initial data.
         LexicalizedParser lp = LexicalizedParser.trainFromTreebank(initial_data, null, op);
@@ -64,13 +66,16 @@ class ActiveLexicalizedParser {
         initialTreeBank = LexicalizedParser.getTreebankFromDir(initial_data, op);
         trainTreeBank = LexicalizedParser.getTreebankFromDir(training_data_dir, op);
 
+        int initialWords = 0;
         for (Tree ct : initialTreeBank) {
-            totalWords += ct.yieldWords().size();
+            initialWords += ct.yieldWords().size();
         }
 
 
         for (int num_words : TRAIN_WORDS_NUMBER){
             System.out.println("NLP: Training on words: " + num_words);
+            iteration = 0;
+            totalWords = initialWords;
 
             // create the intermediate training file.
             initFile(num_words);
@@ -109,12 +114,10 @@ class ActiveLexicalizedParser {
             }
 
             System.out.println("NLP: Testing now...");
-            test(lp, testTreebank);
-            printStats();
+            double PCFG_F1 = test(lp, testTreebank);
+            printStats(PCFG_F1);
 
         }
-
-
         cleanUp();
     }
 
@@ -123,10 +126,11 @@ class ActiveLexicalizedParser {
 
     }
 
-    public static void printStats() {
+    public static void printStats(double PCFG_F1) {
         System.out.println("NLP: *************************************");
         System.out.println("NLP: Total training words: " + totalWords);
         System.out.println("NLP: Number of iterations: " + iteration);
+        System.out.println("NLP: PCFG F1: " + PCFG_F1);
         System.out.println("NLP: *************************************");
     }
 
@@ -389,9 +393,9 @@ class ActiveLexicalizedParser {
 
 
     /* Common Methods */
-    public static void test(LexicalizedParser lp, Treebank testTreebank) {
+    public static double test(LexicalizedParser lp, Treebank testTreebank) {
         EvaluateTreebank evaluator = new EvaluateTreebank(lp);
-        evaluator.testOnTreebank(testTreebank);
+        return evaluator.testOnTreebank(testTreebank);
     }
 
     public static void initFile(int num_words) {
