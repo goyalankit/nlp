@@ -288,7 +288,7 @@ class ActiveLexicalizedParser {
     public static LexicalizedParser trainByProb1(LexicalizedParser lp) {
         boolean first = true;
         initHashForTreeAndProb(lp);
-        while (first || sortedtrainSentWProb.size() > 0) {
+        while ((first || sortedtrainSentWProb.size() > 0) && alreadyTrainedOn < currentTotalTrained) {
             first = false;
             System.out.println("Training iteration: " + iteration);
             chooseByProbSelectParseTree(lp);
@@ -307,6 +307,7 @@ class ActiveLexicalizedParser {
             System.out.println("Choosing by score: " + entry.getValue());
             appendToFile(entry.getKey());
             wordCount += entry.getKey().yieldWords().size();
+            alreadyTrainedOn += entry.getKey().yieldWords().size();
             remainingTrainSentProb.remove(entry.getKey());
             if (wordCount >= 1500) break;
         }
