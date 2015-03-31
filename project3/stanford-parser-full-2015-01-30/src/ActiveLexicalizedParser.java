@@ -44,7 +44,7 @@ class ActiveLexicalizedParser {
      * Usage: {@code java ActiveLexicalizedParser [[model] textFile]}
      * e.g.: java ActiveLexicalizedParser edu/stanford/nlp/models/lexparser/chineseFactored.ser.gz data/chinese-onesent-utf8.txt
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         String initial_data = args[0];
         String training_data_dir = args[1];
         String testTreebankpath = args[2];
@@ -65,7 +65,6 @@ class ActiveLexicalizedParser {
 
         // Get the treebanks
         initialTreeBank = LexicalizedParser.getTreebankFromDir(initial_data, op);
-        trainTreeBank = LexicalizedParser.getTreebankFromDir(training_data_dir, op);
 
         int initialWords = 0;
         for (Tree ct : initialTreeBank) {
@@ -77,20 +76,35 @@ class ActiveLexicalizedParser {
             System.out.println("NLP: Training on words: " + num_words);
             iteration = 0;
 
+            trainTreeBank = LexicalizedParser.getTreebankFromDir(training_data_dir, op);
+
 
             // create the intermediate training file.
             initFile(num_words);
 
+            // write initial tree bank to file.
             appendToFile(initialTreeBank);
 
             totalTrainWords = 0;
-            for (Tree tt : trainTreeBank) {
-                totalTrainWords += tt.yieldWords().size();
-                appendToFile(tt);
-                if (totalTrainWords >= num_words) break;
+            File temp = null;
+            PrintWriter tempOut = null;
+            try {
+                temp = File.createTempFile("temp-file-name-"+num_words, ".tmp");
+                FileWriter fstream = new FileWriter(temp);
+                tempOut = new PrintWriter(new BufferedWriter(fstream));
+                for (Tree tt : trainTreeBank) {
+                    totalTrainWords += tt.yieldWords().size();
+                    tempOut.println(tt.toString());
+                    if (totalTrainWords >= num_words) break;
+                }
+                tempOut.flush();
+                trainTreeBank = LexicalizedParser.getTreebankFromDir(temp.getAbsolutePath(), op);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-
+            System.out.println("NLP: Size of training databank: " + trainTreeBank.size());
             System.out.println("NLP: Training on words actual: " + totalTrainWords);
+
             switch (type) {
                 case RANDOM:
                     System.out.println("NLP: Training using random selection.");
@@ -168,9 +182,7 @@ class ActiveLexicalizedParser {
             wordCount += tree.yieldWords().size();
             listOfTrainData.remove(num);
         }
-
         System.out.println("DEBUG: Length of list of trained data: " + listOfTrainData.size());
-
     }
 
     public static void createListOfTrainData() {
