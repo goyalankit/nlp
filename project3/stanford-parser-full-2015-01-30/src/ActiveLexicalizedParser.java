@@ -85,7 +85,7 @@ class ActiveLexicalizedParser {
 
 
             // create the intermediate training file.
-            initFile(num_words);
+            initFile(num_words, type.toString());
 
             // write initial tree bank to file.
             appendToFile(initialTreeBank);
@@ -94,7 +94,7 @@ class ActiveLexicalizedParser {
             File temp = null;
             PrintWriter tempOut = null;
             try {
-                temp = File.createTempFile("temp-file-name-"+num_words, ".tmp");
+                temp = File.createTempFile("temp-file-name-"+num_words+" "+ type.toString(), ".tmp");
                 FileWriter fstream = new FileWriter(temp);
                 tempOut = new PrintWriter(new BufferedWriter(fstream));
                 for (Tree tt : trainTreeBank) {
@@ -415,8 +415,8 @@ class ActiveLexicalizedParser {
         return evaluator.testOnTreebank(testTreebank);
     }
 
-    public static void initFile(int num_words) {
-        file = new File("training.cont"+num_words);
+    public static void initFile(int num_words, String type) {
+        file = new File("training.cont."+""+type +"."+num_words);
         try {
 
             FileWriter fstream = new FileWriter(file);
