@@ -189,7 +189,7 @@ class ActiveLexicalizedParser {
     * */
     public static LexicalizedParser trainBySentenceLength(LexicalizedParser lp) {
         createHashForTreeAndLength();
-        while (alreadyTrainedOn >= currentTotalTrained) {
+        while (alreadyTrainedOn < currentTotalTrained) {
             System.out.println("Training iteration: " + iteration);
             chooseByLength(1500);
             lp = LexicalizedParser.trainFromTreebank(file.getAbsolutePath(), null, op);
@@ -375,7 +375,7 @@ class ActiveLexicalizedParser {
     }
 
     private static void initHashForTreeAndEntropy(LexicalizedParser lp) {
-        remainingTrainSentProb = new HashMap<>();
+        remainingTrainSentProb = new HashMap<Tree, Double>();
         int total  = trainTreeBank.size();
         for (Tree tree : trainTreeBank) {
             System.out.println("Remaining: " + total--);
