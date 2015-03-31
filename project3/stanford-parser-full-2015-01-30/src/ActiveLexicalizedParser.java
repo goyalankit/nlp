@@ -12,7 +12,7 @@ import edu.stanford.nlp.util.ScoredObject;
 class ActiveLexicalizedParser {
 
     private static final int ITERATION_COUNT = 20;
-    public static boolean BY_ITERATION_COUNT = true;
+    public static boolean BY_ITERATION_COUNT = false;
     public static int []TRAIN_WORDS_NUMBER = new int[] {200, 500, 1000, 5000, 10000, 50000, 75000, 100000};
     public static Treebank trainTreeBank;
     public static Treebank initialTreeBank;
