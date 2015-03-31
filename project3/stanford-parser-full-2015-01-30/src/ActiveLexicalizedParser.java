@@ -19,6 +19,7 @@ class ActiveLexicalizedParser {
     public static Map<Tree, Integer> sortedtrainSentWScore;
     public static Map<Tree, Double> sortedtrainSentWProb;
     public static List<Tree> listOfTrainData;
+    public static int totalTrainWords = 0;
 
     public static HashMap<Tree, Double> remainingTrainSentProb;
 
@@ -75,14 +76,14 @@ class ActiveLexicalizedParser {
         for (int num_words : TRAIN_WORDS_NUMBER){
             System.out.println("NLP: Training on words: " + num_words);
             iteration = 0;
-            totalWords = initialWords;
+
 
             // create the intermediate training file.
             initFile(num_words);
 
             appendToFile(initialTreeBank);
 
-            int totalTrainWords = 0;
+            totalTrainWords = 0;
             for (Tree tt : trainTreeBank) {
                 totalTrainWords += tt.yieldWords().size();
                 appendToFile(tt);
@@ -128,7 +129,7 @@ class ActiveLexicalizedParser {
 
     public static void printStats(double PCFG_F1) {
         System.out.println("NLP: *************************************");
-        System.out.println("NLP: Total training words: " + totalWords);
+        System.out.println("NLP: Total training words: " + totalTrainWords);
         System.out.println("NLP: Number of iterations: " + iteration);
         System.out.println("NLP: PCFG F1: " + PCFG_F1);
         System.out.println("NLP: *************************************");
