@@ -134,7 +134,7 @@ class ActiveLexicalizedParser {
 
     public static void printStats(double PCFG_F1) {
         System.out.println("NLP: *************************************");
-        System.out.println("NLP: Total training words: " + totalTrainWords);
+        System.out.println("NLP: Total training words: " + alreadyTrainedOn);
         System.out.println("NLP: Number of iterations: " + iteration);
         System.out.println("NLP: PCFG F1: " + PCFG_F1);
         System.out.println("NLP: *************************************");
@@ -148,7 +148,7 @@ class ActiveLexicalizedParser {
     public static LexicalizedParser trainByRandomSelection(LexicalizedParser lp) {
         listOfTrainData = new LinkedList<Tree>();
         createListOfTrainData();
-        while (listOfTrainData.size() > 0) {
+        while (alreadyTrainedOn < currentTotalTrained) {
             System.out.println("DEBUG: Training iteration: " + iteration);
             chooseByRandomSelection();
             lp = LexicalizedParser.trainFromTreebank(file.getAbsolutePath(), null, op);
