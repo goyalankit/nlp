@@ -49,6 +49,9 @@ class ActiveLexicalizedParser {
         String training_data_dir = args[1];
         String testTreebankpath = args[2];
         AnalysisType type = AnalysisType.valueOf(args[3]);
+        if (args.length > 4) {
+            BY_ITERATION_COUNT = Boolean.parseBoolean(args[4]);
+        }
         //AnalysisType type = AnalysisType.RANDOM;
 
         // options for lexicalized parser
@@ -154,7 +157,6 @@ class ActiveLexicalizedParser {
     *
     *
     * */
-
     public static LexicalizedParser trainByRandomSelection(LexicalizedParser lp) {
         listOfTrainData = new LinkedList<Tree>();
         createListOfTrainData();
@@ -163,7 +165,7 @@ class ActiveLexicalizedParser {
             chooseByRandomSelection();
             lp = LexicalizedParser.trainFromTreebank(file.getAbsolutePath(), null, op);
             iteration++;
-            if (iteration == 20) break;
+            if (BY_ITERATION_COUNT && iteration == 20) break;
         }
 
         System.out.println("NLP: Training finished.");
