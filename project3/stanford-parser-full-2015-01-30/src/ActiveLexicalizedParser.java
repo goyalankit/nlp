@@ -54,7 +54,7 @@ class ActiveLexicalizedParser {
         if (args.length > 4) {
             BY_ITERATION_COUNT = Boolean.parseBoolean(args[4]);
         }
-        type = AnalysisType.SEL_PROB;
+        type = AnalysisType.SEN_LENGTH;
 
         // options for lexicalized parser
         op = new Options();
@@ -223,7 +223,6 @@ class ActiveLexicalizedParser {
 
     // used for selection by sentence length.
     private static void createHashForTreeAndLength() {
-        sortedtrainSentWScore.clear();
         HashMap<Tree, Integer> trainSentWScore = new HashMap<Tree, Integer>();
         for (Tree tree : trainTreeBank) {
             trainSentWScore.put(tree, tree.yieldWords().size());
