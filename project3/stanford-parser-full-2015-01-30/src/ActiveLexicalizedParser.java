@@ -369,6 +369,7 @@ class ActiveLexicalizedParser {
             appendToFile(entry.getKey());
             wordCount += entry.getKey().yieldWords().size();
             remainingTrainSentProb.remove(entry.getKey());
+            if (wordCount >= 1500) break;
         }
         resetHashForTreeAndEntropy(lp);
         System.out.println("Length of remaining training set: " + remainingTrainSentProb.size());
