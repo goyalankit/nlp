@@ -237,6 +237,7 @@ class ActiveLexicalizedParser {
 
     // used for selection by sentence length.
     private static void createHashForTreeAndLength() {
+        sortedtrainSentWScore.clear();
         HashMap<Tree, Integer> trainSentWScore = new HashMap<Tree, Integer>();
         for (Tree tree : trainTreeBank) {
             trainSentWScore.put(tree, tree.yieldWords().size());
@@ -274,11 +275,11 @@ class ActiveLexicalizedParser {
         int total  = trainTreeBank.size();
         for (Tree tree : trainTreeBank) {
             System.out.println("Remaining: " + total--);
-            tree = lp.apply(tree.taggedYield());
-            System.out.println("Tree Score: " + tree.score());
+            Tree tree1 =  lp.apply(tree.yieldWords());
+
             // TODO check the logic here. If the normalizing factor is okay.
-            remainingTrainSentProb.put(tree, (tree.score()/tree.yieldWords().size()));
-            //System.out.println("TESTING: second -" + tree.score() /(tree.yieldWords().size()));
+            remainingTrainSentProb.put(tree, tree1.score() / tree1.yieldWords().size());
+            System.out.println("TESTING: second -" + tree1.score()/tree1.yieldWords().size());
 
         }
         sortedtrainSentWProb = sortByValueDouble(remainingTrainSentProb);
@@ -288,10 +289,12 @@ class ActiveLexicalizedParser {
         sortedtrainSentWProb.clear();
         HashMap<Tree, Double> trainSentWScore = new HashMap<Tree, Double>();
         for (Tree tree : remainingTrainSentProb.keySet()) {
-            tree = lp.apply(tree.taggedYield());
+            // Apply on untagged words.
+            Tree tree1 =  lp.apply(tree.yieldWords());
             //trainSentWScore.put(tree, Math.pow(tree.score(), 1.0/(tree.yieldWords().size())));
             // TODO check the logic here. If the normalizing factor is okay.
-            trainSentWScore.put(tree, tree.score()/tree.yieldWords().size());
+            // Check if we can keep the prob in logspace.
+            trainSentWScore.put(tree, tree1.score()/tree1.yieldWords().size());
         }
         sortedtrainSentWProb = sortByValueDouble(trainSentWScore);
     }
