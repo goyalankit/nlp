@@ -81,6 +81,7 @@ class ActiveLexicalizedParser {
             System.out.println("NLP: Training on words: " + num_words);
             iteration = 0;
 
+            lp = LexicalizedParser.trainFromTreebank(initial_data, null, op);
             trainTreeBank = LexicalizedParser.getTreebankFromDir(training_data_dir, op);
 
 
