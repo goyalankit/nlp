@@ -74,6 +74,8 @@ class ActiveLexicalizedParser {
             initialWords += ct.yieldWords().size();
         }
 
+        System.out.println("NLP: By iteration is: " + BY_ITERATION_COUNT);
+
 
         for (int num_words : TRAIN_WORDS_NUMBER){
             System.out.println("NLP: Training on words: " + num_words);
