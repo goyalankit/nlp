@@ -303,7 +303,7 @@ class ActiveLexicalizedParser {
             System.out.println("NLP: Testing now...");
             double PCFG_F1 = test(lp, testTreebank);
             printStats(PCFG_F1);
-            
+
             if (iteration == 20) break;
         }
 
@@ -352,13 +352,17 @@ class ActiveLexicalizedParser {
     private static LexicalizedParser trainByTreeEntropy(LexicalizedParser lp) {
         initHashForTreeAndEntropy(lp);
         boolean first = true;
-        while (first || sortedtrainSentWProb.size() > 0) {
-            first = false;
+        while (true) {
             System.out.println("Training iteration: " + iteration);
             chooseByTreeEntropy(lp);
             lp = LexicalizedParser.trainFromTreebank(file.getAbsolutePath(), null, op);
             iteration++;
-            //if (iteration == 20) break;
+
+            // testing
+            System.out.println("NLP: Testing now...");
+            double PCFG_F1 = test(lp, testTreebank);
+            printStats(PCFG_F1);
+            if (iteration == 20) break;
         }
         return lp;
     }
@@ -389,7 +393,6 @@ class ActiveLexicalizedParser {
         remainingTrainSentProb = new HashMap<Tree, Double>();
         int total  = trainTreeBank.size();
         for (Tree tree : trainTreeBank) {
-            System.out.println("Remaining: " + total--);
             // TODO check the logic here. If the normalizing factor is okay.
             remainingTrainSentProb.put(tree, (getTreeEntropy(lp, tree)/tree.yieldWords().size()));
             //System.out.println("TESTING: second -" + tree.score() /(tree.yieldWords().size()));
