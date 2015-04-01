@@ -24,6 +24,7 @@ class ActiveLexicalizedParser {
     public static int currentTotalTrained = 2000;
 
     public static HashMap<Tree, Double> remainingTrainSentProb;
+    public static Treebank testTreebank;
 
     public static PrintWriter out;
     public static long totalWords = 0;
@@ -54,7 +55,7 @@ class ActiveLexicalizedParser {
         if (args.length > 4) {
             BY_ITERATION_COUNT = Boolean.parseBoolean(args[4]);
         }
-        // type = AnalysisType.SEL_PROB;
+        // type = AnalysisType.RANDOM;
 
         // options for lexicalized parser
         op = new Options();
@@ -66,7 +67,7 @@ class ActiveLexicalizedParser {
 
         // train on initial data.
         LexicalizedParser lp = LexicalizedParser.trainFromTreebank(initial_data, null, op);
-        Treebank testTreebank = LexicalizedParser.getTreebankFromDir(testTreebankpath, op);
+        testTreebank = LexicalizedParser.getTreebankFromDir(testTreebankpath, op);
         trainTreeBank = LexicalizedParser.getTreebankFromDir(training_data_dir, op);
 
         // Get the treebanks
@@ -83,7 +84,6 @@ class ActiveLexicalizedParser {
         for (int num_words : TRAIN_WORDS_NUMBER){
             System.out.println("NLP: Training on words: " + num_words);
             iteration = 0;
-            alreadyTrainedOn = 0;
             currentTotalTrained = num_words;
 
             lp = LexicalizedParser.trainFromTreebank(initial_data, null, op);
@@ -118,11 +118,6 @@ class ActiveLexicalizedParser {
                     break;
 
             }
-
-            System.out.println("NLP: Testing now...");
-            double PCFG_F1 = test(lp, testTreebank);
-            printStats(PCFG_F1);
-
         }
         cleanUp();
     }
@@ -148,12 +143,15 @@ class ActiveLexicalizedParser {
     public static LexicalizedParser trainByRandomSelection(LexicalizedParser lp) {
         listOfTrainData = new LinkedList<Tree>();
         createListOfTrainData();
-        while (alreadyTrainedOn < currentTotalTrained) {
+        while (true) {
             System.out.println("DEBUG: Training iteration: " + iteration);
             chooseByRandomSelection();
             lp = LexicalizedParser.trainFromTreebank(file.getAbsolutePath(), null, op);
             iteration++;
-            if (BY_ITERATION_COUNT && iteration == 20) break;
+            System.out.println("NLP: Testing now...");
+            double PCFG_F1 = test(lp, testTreebank);
+            printStats(PCFG_F1);
+            if (iteration == ITERATION_COUNT) break;
         }
 
         System.out.println("NLP: Training finished.");
@@ -168,8 +166,6 @@ class ActiveLexicalizedParser {
             int num = random.nextInt(listOfTrainData.size());
             Tree tree = listOfTrainData.get(num);
             appendToFile(tree);
-            alreadyTrainedOn += tree.yieldWords().size();
-            totalWords += tree.yieldWords().size();
             wordCount += tree.yieldWords().size();
             listOfTrainData.remove(num);
         }
