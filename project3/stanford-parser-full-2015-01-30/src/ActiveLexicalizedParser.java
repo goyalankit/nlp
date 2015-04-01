@@ -299,6 +299,11 @@ class ActiveLexicalizedParser {
             chooseByProbSelectParseTree(lp);
             lp = LexicalizedParser.trainFromTreebank(file.getAbsolutePath(), null, op);
             iteration++;
+
+            System.out.println("NLP: Testing now...");
+            double PCFG_F1 = test(lp, testTreebank);
+            printStats(PCFG_F1);
+            
             if (iteration == 20) break;
         }
 
