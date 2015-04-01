@@ -148,6 +148,7 @@ class ActiveLexicalizedParser {
             chooseByRandomSelection();
             lp = LexicalizedParser.trainFromTreebank(file.getAbsolutePath(), null, op);
             iteration++;
+
             System.out.println("NLP: Testing now...");
             double PCFG_F1 = test(lp, testTreebank);
             printStats(PCFG_F1);
@@ -167,6 +168,7 @@ class ActiveLexicalizedParser {
             Tree tree = listOfTrainData.get(num);
             appendToFile(tree);
             wordCount += tree.yieldWords().size();
+            alreadyTrainedOn += tree.yieldWords().size();
             listOfTrainData.remove(num);
         }
         System.out.println("DEBUG: Length of list of trained data: " + listOfTrainData.size());
@@ -185,12 +187,16 @@ class ActiveLexicalizedParser {
     * */
     public static LexicalizedParser trainBySentenceLength(LexicalizedParser lp) {
         createHashForTreeAndLength();
-        while (alreadyTrainedOn < currentTotalTrained) {
+        while (true) {
             System.out.println("Training iteration: " + iteration);
             chooseByLength(1500);
             lp = LexicalizedParser.trainFromTreebank(file.getAbsolutePath(), null, op);
             iteration++;
-            //if (BY_ITERATION_COUNT && iteration == 4) break;
+
+            System.out.println("NLP: Testing now...");
+            double PCFG_F1 = test(lp, testTreebank);
+            printStats(PCFG_F1);
+            if (iteration == 20) break;
         }
 
         System.out.println("Training finished.");
@@ -204,7 +210,7 @@ class ActiveLexicalizedParser {
 
             @Override
             public int compare(Object o1, Object o2) {
-                return ((Comparable) ((Map.Entry) (o1)).getValue()).compareTo(((Map.Entry) (o2)).getValue());
+                return ((Comparable) ((Map.Entry) (o2)).getValue()).compareTo(((Map.Entry) (o1)).getValue());
             }
         });
 
