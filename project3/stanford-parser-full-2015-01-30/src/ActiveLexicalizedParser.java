@@ -54,7 +54,7 @@ class ActiveLexicalizedParser {
         if (args.length > 4) {
             BY_ITERATION_COUNT = Boolean.parseBoolean(args[4]);
         }
-        //type = AnalysisType.SEN_LENGTH;
+        // type = AnalysisType.SEL_PROB;
 
         // options for lexicalized parser
         op = new Options();
@@ -264,7 +264,7 @@ class ActiveLexicalizedParser {
             Tree tree1 =  lp.apply(tree.yieldWords());
 
             // TODO check the logic here. If the normalizing factor is okay.
-            remainingTrainSentProb.put(tree, Math.exp(tree1.score()/tree1.yieldWords().size()-1));
+            remainingTrainSentProb.put(tree, tree1.score()/tree1.yieldWords().size()-1);
 //            System.out.println("TESTING: second -" + tree1.score()/(tree1.yieldWords().size()-1));
 
         }
@@ -279,7 +279,7 @@ class ActiveLexicalizedParser {
             Tree tree1 =  lp.apply(tree.yieldWords());
             //trainSentWScore.put(tree, Math.pow(tree.score(), 1.0/(tree.yieldWords().size())));
             // TODO check the logic here. If the normalizing factor is okay.
-            trainSentWScore.put(tree, Math.exp(tree1.score()/(tree1.yieldWords().size()-1)));
+            trainSentWScore.put(tree, tree1.score()/(tree1.yieldWords().size()-1));
         }
         sortedtrainSentWProb = sortByValueDouble(trainSentWScore);
     }
