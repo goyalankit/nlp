@@ -55,7 +55,7 @@ class ActiveLexicalizedParser {
         if (args.length > 4) {
             BY_ITERATION_COUNT = Boolean.parseBoolean(args[4]);
         }
-        // type = AnalysisType.RANDOM;
+        //type = AnalysisType.SEL_PROB;
 
         // options for lexicalized parser
         op = new Options();
@@ -262,11 +262,14 @@ class ActiveLexicalizedParser {
         remainingTrainSentProb = new HashMap<Tree, Double>();
         int total  = trainTreeBank.size();
         for (Tree tree : trainTreeBank) {
-            System.out.println("Remaining: " + total--);
+//            System.out.println("Remaining: " + total--);
             Tree tree1 =  lp.apply(tree.yieldWords());
 
             // TODO check the logic here. If the normalizing factor is okay.
-            remainingTrainSentProb.put(tree, tree1.score()/tree1.yieldWords().size()-1);
+            if (tree1.yieldWords().size() == 1)
+                remainingTrainSentProb.put(tree, tree1.score());
+            else
+                remainingTrainSentProb.put(tree, Math.exp(tree1.score()/tree1.yieldWords().size()-1));
 //            System.out.println("TESTING: second -" + tree1.score()/(tree1.yieldWords().size()-1));
 
         }
@@ -281,7 +284,7 @@ class ActiveLexicalizedParser {
             Tree tree1 =  lp.apply(tree.yieldWords());
             //trainSentWScore.put(tree, Math.pow(tree.score(), 1.0/(tree.yieldWords().size())));
             // TODO check the logic here. If the normalizing factor is okay.
-            trainSentWScore.put(tree, tree1.score()/(tree1.yieldWords().size()-1));
+            trainSentWScore.put(tree, Math.exp(tree1.score()/(tree1.yieldWords().size()-1)));
         }
         sortedtrainSentWProb = sortByValueDouble(trainSentWScore);
     }
@@ -290,13 +293,13 @@ class ActiveLexicalizedParser {
     public static LexicalizedParser trainByProb1(LexicalizedParser lp) {
         boolean first = true;
         initHashForTreeAndProb(lp);
-        while ((first || sortedtrainSentWProb.size() > 0) && alreadyTrainedOn < currentTotalTrained) {
+        while (true) {
             first = false;
             System.out.println("Training iteration: " + iteration);
             chooseByProbSelectParseTree(lp);
             lp = LexicalizedParser.trainFromTreebank(file.getAbsolutePath(), null, op);
             iteration++;
-            //if (iteration == 20) break;
+            if (iteration == 20) break;
         }
 
         System.out.println("Training finished.");
@@ -317,14 +320,14 @@ class ActiveLexicalizedParser {
         System.out.println("Length of remaining training set: " + remainingTrainSentProb.size());
     }
 
-    // higher probability is at the top
+
     public static Map<Tree, Double> sortByValueDouble(Map<Tree, Double> map) {
         List list = new LinkedList(map.entrySet());
         Collections.sort(list, new Comparator() {
 
             @Override
             public int compare(Object o1, Object o2) {
-                return ((Comparable) ((Map.Entry) (o2)).getValue()).compareTo(((Map.Entry) (o1)).getValue());
+                return ((Comparable) ((Map.Entry) (o1)).getValue()).compareTo(((Map.Entry) (o2)).getValue());
             }
         });
 
