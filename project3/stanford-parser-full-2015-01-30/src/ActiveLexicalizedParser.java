@@ -384,6 +384,7 @@ class ActiveLexicalizedParser {
         for (Map.Entry<Tree, Double> entry : sortedtrainSentWProb.entrySet()) {
             appendToFile(entry.getKey());
             wordCount += entry.getKey().yieldWords().size();
+            alreadyTrainedOn += entry.getKey().yieldWords().size();
             remainingTrainSentProb.remove(entry.getKey());
             if (wordCount >= 1500) break;
         }
