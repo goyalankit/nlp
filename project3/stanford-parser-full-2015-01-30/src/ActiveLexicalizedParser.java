@@ -13,7 +13,7 @@ class ActiveLexicalizedParser {
 
     private static final int ITERATION_COUNT = 20;
     public static boolean BY_ITERATION_COUNT = false;
-    public static int []TRAIN_WORDS_NUMBER = new int[] {2000, 5000, 10000, 50000, 75000, 100000};
+    public static int[] TRAIN_WORDS_NUMBER = new int[]{1, 2, 3};
     public static Treebank trainTreeBank;
     public static Treebank initialTreeBank;
     public static Map<Tree, Integer> sortedtrainSentWScore;
@@ -31,7 +31,10 @@ class ActiveLexicalizedParser {
     public static Options op;
     public static File file;
     public static int iteration = 0;
-    public enum AnalysisType { RANDOM, SEN_LENGTH, SEL_PROB, TREE_ENTROPY };
+
+    public enum AnalysisType {RANDOM, SEN_LENGTH, SEL_PROB, TREE_ENTROPY}
+
+    ;
 
     private ActiveLexicalizedParser() {
     } // static methods only
@@ -55,7 +58,7 @@ class ActiveLexicalizedParser {
         if (args.length > 4) {
             BY_ITERATION_COUNT = Boolean.parseBoolean(args[4]);
         }
-        //type = AnalysisType.SEL_PROB;
+        type = AnalysisType.TREE_ENTROPY;
 
         // options for lexicalized parser
         op = new Options();
@@ -81,13 +84,11 @@ class ActiveLexicalizedParser {
         System.out.println("NLP: By iteration is: " + BY_ITERATION_COUNT);
 
 
-        for (int num_words : TRAIN_WORDS_NUMBER){
-            System.out.println("NLP: Training on words: " + num_words);
+        for (int num_words : TRAIN_WORDS_NUMBER) {
             iteration = 0;
             currentTotalTrained = num_words;
 
             lp = LexicalizedParser.trainFromTreebank(initial_data, null, op);
-
 
 
             // create the intermediate training file.
@@ -218,7 +219,7 @@ class ActiveLexicalizedParser {
         for (Iterator it = list.iterator(); it.hasNext(); ) {
             Map.Entry entry = (Map.Entry) it.next();
             result.put(entry.getKey(), entry.getValue());
-            System.out.println("Score: "+entry.getValue());
+            System.out.println("Score: " + entry.getValue());
         }
         return result;
     }
@@ -260,16 +261,19 @@ class ActiveLexicalizedParser {
     * */
     public static void initHashForTreeAndProb(LexicalizedParser lp) {
         remainingTrainSentProb = new HashMap<Tree, Double>();
-        int total  = trainTreeBank.size();
+        int total = trainTreeBank.size();
         for (Tree tree : trainTreeBank) {
 //            System.out.println("Remaining: " + total--);
-            Tree tree1 =  lp.apply(tree.yieldWords());
+            Tree tree1 = lp.apply(tree.yieldWords());
+
+            double exp = Math.exp(tree1.score());
+            int len = tree1.getLeaves().size() - 1;
 
             // TODO check the logic here. If the normalizing factor is okay.
             if (tree1.yieldWords().size() == 1)
-                remainingTrainSentProb.put(tree, tree1.score());
+                remainingTrainSentProb.put(tree, exp);
             else
-                remainingTrainSentProb.put(tree, Math.exp(tree1.score()/tree1.yieldWords().size()-1));
+                remainingTrainSentProb.put(tree, Math.pow(exp, (1.0 / len)));
 //            System.out.println("TESTING: second -" + tree1.score()/(tree1.yieldWords().size()-1));
 
         }
@@ -281,10 +285,18 @@ class ActiveLexicalizedParser {
         HashMap<Tree, Double> trainSentWScore = new HashMap<Tree, Double>();
         for (Tree tree : remainingTrainSentProb.keySet()) {
             // Apply on untagged words.
-            Tree tree1 =  lp.apply(tree.yieldWords());
+            Tree tree1 = lp.apply(tree.yieldWords());
+
+            double exp = Math.exp(tree1.score());
+            int len = tree1.getLeaves().size() - 1;
+
             //trainSentWScore.put(tree, Math.pow(tree.score(), 1.0/(tree.yieldWords().size())));
             // TODO check the logic here. If the normalizing factor is okay.
-            trainSentWScore.put(tree, Math.exp(tree1.score()/(tree1.yieldWords().size()-1)));
+
+            if (tree1.yieldWords().size() == 1)
+                trainSentWScore.put(tree, exp);
+            else
+                trainSentWScore.put(tree, Math.pow(exp, (1.0 / len)));
         }
         sortedtrainSentWProb = sortByValueDouble(trainSentWScore);
     }
@@ -340,7 +352,7 @@ class ActiveLexicalizedParser {
         for (Iterator it = list.iterator(); it.hasNext(); ) {
             Map.Entry entry = (Map.Entry) it.next();
             result.put(entry.getKey(), entry.getValue());
-            System.out.println("Score: "+entry.getValue());
+            System.out.println("Score: " + entry.getValue());
         }
         return result;
     }
@@ -384,34 +396,51 @@ class ActiveLexicalizedParser {
         HashMap<Tree, Double> trainSentWScore = new HashMap<Tree, Double>();
         for (Tree tree : remainingTrainSentProb.keySet()) {
             // TODO check the logic here. If the normalizing factor is okay.
-            trainSentWScore.put(tree, getTreeEntropy(lp, tree)/tree.size());
+            trainSentWScore.put(tree, getTreeEntropy(lp, tree) / tree.size());
         }
         sortedtrainSentWProb = sortByValueDouble(trainSentWScore);
     }
 
     private static void initHashForTreeAndEntropy(LexicalizedParser lp) {
         remainingTrainSentProb = new HashMap<Tree, Double>();
-        int total  = trainTreeBank.size();
+        int total = trainTreeBank.size();
         for (Tree tree : trainTreeBank) {
             // TODO check the logic here. If the normalizing factor is okay.
-            remainingTrainSentProb.put(tree, (getTreeEntropy(lp, tree)/tree.yieldWords().size()));
+            remainingTrainSentProb.put(tree, (getTreeEntropy(lp, tree) / tree.yieldWords().size()));
             //System.out.println("TESTING: second -" + tree.score() /(tree.yieldWords().size()));
         }
         sortedtrainSentWProb = sortByValueDouble(remainingTrainSentProb);
 
     }
 
-     private static double getTreeEntropy(LexicalizedParser lp, Tree tree) {
+
+
+    private static double getTreeEntropy(LexicalizedParser lp, Tree tree) {
         LexicalizedParserQuery lpq = lp.lexicalizedParserQuery();
 
         lpq.parse(tree.yieldWords());
         List<ScoredObject<Tree>> kPraseTrees = lpq.getKBestPCFGParses(10);
+        List<Double> al = new ArrayList<>();
+
         double total_score = 0.0;
         for (ScoredObject<Tree> sco : kPraseTrees) {
-            total_score += sco.score();
+            total_score += Math.exp(sco.score());
         }
-         System.out.println("Total Tree Entropy: " + total_score);
-        return total_score;
+
+        for (ScoredObject<Tree> sco : kPraseTrees) {
+            double val = Math.exp(sco.score()) / total_score;
+            al.add(val);
+        }
+
+        double entropy = 0.0;
+        for (double val : al) {
+            double ent =  -1 * (Math.log(val)/Math.log(2)) * val ;
+            entropy += ent;
+        }
+
+        double finalEntropy = entropy / tree.yieldWords().size();
+
+        return finalEntropy;
     }
 
 
@@ -422,7 +451,7 @@ class ActiveLexicalizedParser {
     }
 
     public static void initFile(int num_words, String type) {
-        file = new File("training.cont."+""+type +"."+num_words);
+        file = new File("training.cont." + "" + type + "." + num_words);
         try {
 
             FileWriter fstream = new FileWriter(file);
