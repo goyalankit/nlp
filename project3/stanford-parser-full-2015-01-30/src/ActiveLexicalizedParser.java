@@ -58,7 +58,7 @@ class ActiveLexicalizedParser {
         if (args.length > 4) {
             BY_ITERATION_COUNT = Boolean.parseBoolean(args[4]);
         }
-        type = AnalysisType.TREE_ENTROPY;
+        //type = AnalysisType.TREE_ENTROPY;
 
         // options for lexicalized parser
         op = new Options();
@@ -90,7 +90,6 @@ class ActiveLexicalizedParser {
             alreadyTrainedOn = 0;
 
             lp = LexicalizedParser.trainFromTreebank(initial_data, null, op);
-
 
             // create the intermediate training file.
             initFile(num_words, type.toString());
