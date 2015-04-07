@@ -87,6 +87,7 @@ class ActiveLexicalizedParser {
         for (int num_words : TRAIN_WORDS_NUMBER) {
             iteration = 0;
             currentTotalTrained = num_words;
+            alreadyTrainedOn = 0;
 
             lp = LexicalizedParser.trainFromTreebank(initial_data, null, op);
 
@@ -122,7 +123,6 @@ class ActiveLexicalizedParser {
         }
         cleanUp();
     }
-
 
     public static void cleanUp() {
 
@@ -293,6 +293,7 @@ class ActiveLexicalizedParser {
             //trainSentWScore.put(tree, Math.pow(tree.score(), 1.0/(tree.yieldWords().size())));
             // TODO check the logic here. If the normalizing factor is okay.
 
+
             if (tree1.yieldWords().size() == 1)
                 trainSentWScore.put(tree, exp);
             else
@@ -300,7 +301,6 @@ class ActiveLexicalizedParser {
         }
         sortedtrainSentWProb = sortByValueDouble(trainSentWScore);
     }
-
 
     public static LexicalizedParser trainByProb1(LexicalizedParser lp) {
         boolean first = true;
@@ -411,7 +411,6 @@ class ActiveLexicalizedParser {
             //System.out.println("TESTING: second -" + tree.score() /(tree.yieldWords().size()));
         }
         sortedtrainSentWProb = sortByValueDouble(remainingTrainSentProb);
-
     }
 
 
