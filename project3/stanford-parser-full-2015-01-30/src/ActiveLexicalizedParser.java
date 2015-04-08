@@ -58,7 +58,7 @@ class ActiveLexicalizedParser {
         if (args.length > 4) {
             BY_ITERATION_COUNT = Boolean.parseBoolean(args[4]);
         }
-        //type = AnalysisType.TREE_ENTROPY;
+        //type = AnalysisType.SEN_LENGTH;
 
         // options for lexicalized parser
         op = new Options();
@@ -203,7 +203,6 @@ class ActiveLexicalizedParser {
         return lp;
     }
 
-    // lower value is at the top.
     public static Map<Tree, Integer> sortByValueInteger(Map<Tree, Integer> map) {
         List list = new LinkedList(map.entrySet());
         Collections.sort(list, new Comparator() {
@@ -398,7 +397,7 @@ class ActiveLexicalizedParser {
             // TODO check the logic here. If the normalizing factor is okay.
             trainSentWScore.put(tree, getTreeEntropy(lp, tree) / tree.size());
         }
-        sortedtrainSentWProb = sortByValueDouble(trainSentWScore);
+        sortedtrainSentWProb = sortByValueDoubleEntropy(trainSentWScore);
     }
 
     private static void initHashForTreeAndEntropy(LexicalizedParser lp) {
@@ -409,7 +408,26 @@ class ActiveLexicalizedParser {
             remainingTrainSentProb.put(tree, (getTreeEntropy(lp, tree) / tree.yieldWords().size()));
             //System.out.println("TESTING: second -" + tree.score() /(tree.yieldWords().size()));
         }
-        sortedtrainSentWProb = sortByValueDouble(remainingTrainSentProb);
+        sortedtrainSentWProb = sortByValueDoubleEntropy(remainingTrainSentProb);
+    }
+
+    public static Map<Tree, Double> sortByValueDoubleEntropy(Map<Tree, Double> map) {
+        List list = new LinkedList(map.entrySet());
+        Collections.sort(list, new Comparator() {
+
+            @Override
+            public int compare(Object o1, Object o2) {
+                return ((Comparable) ((Map.Entry) (o2)).getValue()).compareTo(((Map.Entry) (o1)).getValue());
+            }
+        });
+
+        Map result = new LinkedHashMap();
+        for (Iterator it = list.iterator(); it.hasNext(); ) {
+            Map.Entry entry = (Map.Entry) it.next();
+            result.put(entry.getKey(), entry.getValue());
+            System.out.println("Score: " + entry.getValue());
+        }
+        return result;
     }
 
 
